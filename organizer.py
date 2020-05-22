@@ -31,6 +31,21 @@ if __name__ == '__main__':
                 activities = activities[:index] + activities[index + 1:]
             except:
                 print('Wrong input')
+        elif action in ('s', 'stats', 'statistics'):
+            print()
+            total_time = time() - starting_time
+            parts = dict()
+            for a in activities:
+                if a[0] not in parts:
+                    parts[a[0]] = 0
+                parts[a[0]] += a[2] - a[1]
+            sum = 0
+            for k, v in parts.items():
+                sum += v
+                v = round(v / total_time * 100)
+                print(f'{v}%\t{k}')
+            print(f'{round((1 - sum / total_time) * 100)}%\tDoing nothing')
+            input()
         else:
             activities.append([action, time(), time()])
         clear()
