@@ -51,5 +51,15 @@ if __name__ == '__main__':
                 activities = activities[:index] + activities[index + 1:]
             except:
                 print('Wrong input')
+        elif action.startswith('s') or action.startswith('save'):
+            try:
+                name = action.split(' ')[1]
+            except:
+                print('Name is required')
+            with open(name, 'w') as f:
+                f.write(str(starting_time))
+                f.write('\n')
+                for a in activities:
+                    f.write('\n'.join('\t'.join(str(e) for e in a) for a in activities))
         else:
             activities.append([action, time(), time()])
