@@ -38,7 +38,7 @@ if __name__ == '__main__':
         action = input(':')
         if not action:
             continue
-        elif action in ('q', 'quit'):
+        elif action in ('exit', 'quit'):
             quit()
         elif action in ('e', 'end'):
             activities[-1][2] = time()
@@ -56,10 +56,23 @@ if __name__ == '__main__':
                 name = action.split(' ')[1]
             except:
                 print('Name is required')
+                continue
             with open(name, 'w') as f:
                 f.write(str(starting_time))
                 f.write('\n')
                 for a in activities:
                     f.write('\n'.join('\t'.join(str(e) for e in a) for a in activities))
+        elif action.startswith('open'):
+            try:
+                name = action.split(' ')[1]
+            except:
+                print('Name is required')
+                continue
+            with open(name, 'r') as f:
+                content = f.read().split('\n')
+            starting_time = float(content[0])
+            content = content[1:]
+            content = [e.split('\t') for e in content]
+            activities = [[e[0], float(e[1]), float(e[2])] for e in content]
         else:
             activities.append([action, time(), time()])
