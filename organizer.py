@@ -19,22 +19,23 @@ if __name__ == '__main__':
     input()
     while True:
         clear()
-        print(f'Started at {tts(starting_time)}\t\tNow is {tts(time())}\t\tSpent {tts(time() - starting_time - 18000)}')
+        total_time = (activities[-1][2] - starting_time) if activities else 0
+        print(f'Started at {tts(starting_time)}\t\tNow is {tts(time())}\t\tSpent {tts(total_time - 18000)}\n')
         print(*(f' {i + 1}\t{tts(a[1])}\t{tts(a[2])}\t{a[0]}' for i, a in enumerate(activities)), sep='\n')
         print()
-        total_time = time() - starting_time
-        parts = dict()
-        for a in activities:
-            if a[0] not in parts:
-                parts[a[0]] = 0
-            parts[a[0]] += a[2] - a[1]
-        sum = 0
-        for k, v in parts.items():
-            sum += v
-            v = round(v / total_time * 100)
-            print(f'{v}%\t{k}')
-        print(f'{round((1 - sum / total_time) * 100)}%\tDoing nothing')
-        print()
+        if activities:
+            parts = dict()
+            for a in activities:
+                if a[0] not in parts:
+                    parts[a[0]] = 0
+                parts[a[0]] += a[2] - a[1]
+            sum = 0
+            for k, v in parts.items():
+                sum += v
+                v = round(v / total_time * 100)
+                print(f'{v}%\t{k}')
+            print(f'{round((1 - sum / total_time) * 100)}%\tDoing nothing')
+            print()
         action = input(':')
         if not action:
             continue
@@ -60,8 +61,7 @@ if __name__ == '__main__':
             with open(name, 'w') as f:
                 f.write(str(starting_time))
                 f.write('\n')
-                for a in activities:
-                    f.write('\n'.join('\t'.join(str(e) for e in a) for a in activities))
+                f.write('\n'.join('\t'.join(str(e) for e in a) for a in activities))
         elif action.startswith('open'):
             try:
                 name = action.split(' ')[1]
@@ -72,7 +72,10 @@ if __name__ == '__main__':
                 content = f.read().split('\n')
             starting_time = float(content[0])
             content = content[1:]
+            if not content[-1]:
+                content = content[:-1]
             content = [e.split('\t') for e in content]
+            print(content)
             activities = [[e[0], float(e[1]), float(e[2])] for e in content]
         else:
             activities.append([action, time(), time()])
