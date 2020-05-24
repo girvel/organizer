@@ -1,13 +1,15 @@
 import os
-from time import time, strftime, localtime
+import platform
+from time import time, strftime, localtime, gmtime
+import termcolor
 
 
 def clear():
-    os.system('clear')
+    os.system('cls' if platform.system() == 'Windows' else 'clear')
 
 
-def tts(t):
-    return strftime('%H:%M', localtime(t))
+def tts(t, relative=False):
+    return strftime('%H:%M', (gmtime if relative else localtime)(t))
 
 
 starting_time = time()
@@ -20,7 +22,19 @@ if __name__ == '__main__':
     while True:
         clear()
         total_time = (activities[-1][2] - starting_time) if activities else 0
-        print(f'Started at {tts(starting_time)}\t\tNow is {tts(time())}\t\tSpent {tts(total_time - 18000)}\n')
+        print(
+            termcolor.colored(
+                'Started at {started}{tab1}Now is {current}{tab2}Spent {spent}\n'.format(
+                    started=tts(starting_time),
+                    current=tts(time()),
+                    spent=tts(total_time, True),
+                    tab1=' ' * 14,
+                    tab2=' ' * 18,
+                ),
+                "grey",
+                "on_white"
+            )
+        )
         print(*(f' {i + 1}\t{tts(a[1])}\t{tts(a[2])}\t{a[0]}' for i, a in enumerate(activities)), sep='\n')
         print()
         if activities:
@@ -29,13 +43,16 @@ if __name__ == '__main__':
                 if a[0] not in parts:
                     parts[a[0]] = 0
                 parts[a[0]] += a[2] - a[1]
-            sum = 0
-            for k, v in parts.items():
-                sum += v
-                v = round(v / total_time * 100)
-                print(f'{v}%\t{k}')
-            print(f'{round((1 - sum / total_time) * 100)}%\tDoing nothing')
-            print()
+            print(
+                *(
+                    '{percentage}%\t{time}\t{activity}'.format(
+                        percentage=round(v / total_time * 100),
+                        time=tts(v, True),
+                        activity=k) for k, v in {**parts, "doing nothing": total_time - sum(parts.values())}.items()
+                ),
+                sep='\n',
+                end='\n\n'
+            )
         action = input(':')
         if not action:
             continue
