@@ -1,7 +1,10 @@
 import os
 import platform
+from inspect import signature
 from time import time, strftime, localtime, gmtime
 import termcolor
+
+from actions import actions, apply_action
 
 
 def clear():
@@ -12,8 +15,13 @@ def tts(t, relative=False):
     return strftime('%H:%M', (gmtime if relative else localtime)(t))
 
 
-starting_time = time()
-activities = []  # activity is (name, starting time, ending time)
+class State:
+    def __init__(self):
+        self.starting_time = time()
+        self.activities = []  # activity is (name, starting time, ending time)
+
+
+state = State()
 
 if __name__ == '__main__':
     clear()
@@ -21,11 +29,11 @@ if __name__ == '__main__':
     input()
     while True:
         clear()
-        total_time = (activities[-1][2] - starting_time) if activities else 0
+        total_time = (state.activities[-1][2] - state.starting_time) if state.activities else 0
         print(
             termcolor.colored(
                 'Started at {started}{tab1}Now is {current}{tab2}Spent {spent}\n'.format(
-                    started=tts(starting_time),
+                    started=tts(state.starting_time),
                     current=tts(time()),
                     spent=tts(total_time, True),
                     tab1=' ' * 14,
@@ -35,11 +43,11 @@ if __name__ == '__main__':
                 "on_white"
             )
         )
-        print(*(f' {i + 1}\t{tts(a[1])}\t{tts(a[2])}\t{a[0]}' for i, a in enumerate(activities)), sep='\n')
+        print(*(f' {i + 1}\t{tts(a[1])}\t{tts(a[2])}\t{a[0]}' for i, a in enumerate(state.activities)), sep='\n')
         print()
-        if activities:
+        if state.activities:
             parts = dict()
-            for a in activities:
+            for a in state.activities:
                 if a[0] not in parts:
                     parts[a[0]] = 0
                 parts[a[0]] += a[2] - a[1]
@@ -56,43 +64,11 @@ if __name__ == '__main__':
         action = input(':')
         if not action:
             continue
-        elif action in ('exit', 'quit'):
-            quit()
-        elif action in ('e', 'end'):
-            activities[-1][2] = time()
-        elif action.startswith('d') or action.startswith('delete'):
-            try:
-                index = int(action.split(' ')[1]) - 1
-            except:
-                index = len(activities) - 1
-            try:
-                activities = activities[:index] + activities[index + 1:]
-            except:
-                print('Wrong input')
-        elif action.startswith('s') or action.startswith('save'):
-            try:
-                name = action.split(' ')[1]
-            except:
-                print('Name is required')
-                continue
-            with open(name, 'w') as f:
-                f.write(str(starting_time))
-                f.write('\n')
-                f.write('\n'.join('\t'.join(str(e) for e in a) for a in activities))
-        elif action.startswith('open'):
-            try:
-                name = action.split(' ')[1]
-            except:
-                print('Name is required')
-                continue
-            with open(name, 'r') as f:
-                content = f.read().split('\n')
-            starting_time = float(content[0])
-            content = content[1:]
-            if not content[-1]:
-                content = content[:-1]
-            content = [e.split('\t') for e in content]
-            print(content)
-            activities = [[e[0], float(e[1]), float(e[2])] for e in content]
         else:
-            activities.append([action, time(), time()])
+            try:
+                if not apply_action(actions, action, state):
+                    state.activities.append([action, time(), time()])
+            except TypeError:
+                input(f'This action has different signature\n')
+            except ValueError:
+                input(f'This action has other types of arguments\n')
